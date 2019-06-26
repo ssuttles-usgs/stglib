@@ -1,0 +1,2 @@
+python C:\Users\ssuttles\Git\stglib\scripts\runaqdhdr2cdf.py C:\Users\ssuttles\data\NRPP\CACO\glob_att1121A.txt aqd1121A_config.yaml
+python C:\Users\ssuttles\Git\stglib\scripts\runaqdcdf2nc.py --atmpres atmpres.cdf 11211Aaqd-raw.cdf
