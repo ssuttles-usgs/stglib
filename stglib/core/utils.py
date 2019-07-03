@@ -629,13 +629,24 @@ def shift_time(ds, timeshift):
             'time offset of %.3f s was adjusted to %.f s for shifting time' %
             (timeshift, int(timeshift)))
 
+    if 'ClockOffset' in ds.attrs:
+        if ds.attrs['ClockOffset'] != 0:
+            # note negative on ds.attrs['ClockOffset']
+            ds['time'] = (ds['time'] +
+                          np.timedelta64(-ds.attrs['ClockOffset'], 's'))
+            print('Time shifted by {:d} s from ClockOffset'.format(
+                -ds.attrs['ClockOffset']))
+
     if 'ClockError' in ds.attrs:
         if ds.attrs['ClockError'] != 0:
-            # note negative on ds.attrs['ClockError']
-            ds['time'] = (ds['time'] +
-                          np.timedelta64(-ds.attrs['ClockError'], 's'))
-            print('Time shifted by {:d} s from ClockError'.format(
-                -ds.attrs['ClockError']))
+            # note negative on ds.attrs['ClockOffset']
+            ds['time'] = (
+                ds['time'] +
+                pd.TimedeltaIndex(np.linspace(0,
+                                              -ds.attrs['ClockError'],
+                                              len(ds['time'])), 's'))
+            print('Time interpolated {:d} s using ClockError'.format(
+                ds.attrs['ClockError']))
 
     return ds
 
