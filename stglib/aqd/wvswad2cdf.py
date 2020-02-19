@@ -56,9 +56,16 @@ def wad_to_cdf(metadata, writefile=True):
     ds.attrs['sample_interval'] = 1/fs
     ds.attrs['samples_per_burst'] = ds.attrs['WaveNumberOfSamples']
 
-    ds = utils.create_epic_times(ds, waves=True)
+    if (
+        ('cf' in ds.attrs and str(ds.attrs['cf']) == '1.6') or
+        ('CF' in ds.attrs and str(ds.attrs['CF']) == '1.6')
+       ):
+        pass
+    else:
+        print('about to create epic times')
+        ds = utils.create_epic_times(ds, waves=True)
 
-    ds = utils.create_2d_time(ds)
+        ds = utils.create_2d_time(ds)
 
     ds = utils.ds_coord_no_fillvalue(ds)
 
@@ -127,8 +134,7 @@ def load_wad(ds):
         print('Number of rows read is not a multiple of %d. Truncating data '
               'to last full burst' %
               ds.attrs['WaveNumberOfSamples'])
-        print('')
-        ds = ds.sel(time=ds.time[0:-1])
+        ds = ds.sel(time=ds.time[0:int(np.floor(r / ds.attrs['WaveNumberOfSamples']))])
     nburst = int(np.floor(r/ds.attrs['WaveNumberOfSamples']))
     nsamps = int(nburst * ds.attrs['WaveNumberOfSamples'])
     wavensamps = int(ds.attrs['WaveNumberOfSamples'])
