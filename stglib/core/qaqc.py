@@ -236,3 +236,43 @@ def trim_fliers(ds, var):
         ds = utils.insert_note(ds, var, notetxt)
 
     return ds
+
+def trim_maxabs_diff_2d(ds, var):
+    if var + "_maxabs_diff_2d" in ds.attrs:
+        print(
+            "%s: Trimming using maximum absolute diff of %5.2f of 2d variable"
+            % (var, ds.attrs[var + "_maxabs_diff_2d"])
+        )
+        
+        bads1 = (np.abs(ds[var].diff(dim=ds[var].dims[0])) >= ds.attrs[var + "_maxabs_diff_2d"])
+        bads2 = (np.abs(ds[var].diff(dim=ds[var].dims[1])) >= ds.attrs[var + "_maxabs_diff_2d"] )       
+        ds[var][1:, :] = ds[var].where(~bads1)
+        ds[var][:, 1:] = ds[var].where(~bads2)
+
+        notetxt = (
+            "Values filled where data increases by more than %5.2f "
+            "units (absolute) in a single time step along the dimensions of 2d variable. "
+            % ds.attrs[var + "_maxabs_diff_2d"]
+        )
+
+        ds = utils.insert_note(ds, var, notetxt)
+
+    return ds
+
+
+def trim_mask(ds, var):
+    if var + "_mask" in ds.attrs:
+        print(
+            "%s: Trimming using other vaiable(s) %s as mask"
+            % (var, ds.attrs[var + "_mask"])
+        )
+        
+        for trimvar in ds.attrs[var + "_mask"]:
+            ds[var]=ds[var].where(~(ds[trimvar].isnull()))
+            print(f"{var}: Trimming using {trimvar} mask")
+
+            notetxt = f"Values filled using {trimvar} mask."
+
+            ds = utils.insert_note(ds, var, notetxt)
+
+    return ds
