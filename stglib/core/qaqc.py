@@ -237,17 +237,36 @@ def trim_fliers(ds, var):
 
     return ds
 
+
 def trim_maxabs_diff_2d(ds, var):
     if var + "_maxabs_diff_2d" in ds.attrs:
         print(
             "%s: Trimming using maximum absolute diff of %5.2f of 2d variable"
             % (var, ds.attrs[var + "_maxabs_diff_2d"])
         )
-        
-        bads1 = (np.abs(ds[var].diff(dim=ds[var].dims[0])) >= ds.attrs[var + "_maxabs_diff_2d"])
-        bads2 = (np.abs(ds[var].diff(dim=ds[var].dims[1])) >= ds.attrs[var + "_maxabs_diff_2d"] )       
-        ds[var][1:, :] = ds[var].where(~bads1)
-        ds[var][:, 1:] = ds[var].where(~bads2)
+
+        # bads0 = (np.abs(ds[var].diff(dim=ds[var].dims[0])) >= ds.attrs[var + "_maxabs_diff_2d"])
+        # bads1 = (np.abs(ds[var].diff(dim=ds[var].dims[1])) >= ds.attrs[var + "_maxabs_diff_2d"])
+        # ds[var][1:, :] = ds[var].where(~bads0)
+        # ds[var][:, 1:] = ds[var].where(~bads1)
+
+        # bads0 = (np.abs(np.diff(ds[var],axis=0,prepend=[ds[var][0,:]])) >= ds.attrs[var + "_maxabs_diff_2d"])
+        # bads1 = (np.abs(np.diff(ds[var],axis=1,prepend=[ds[var][:,0]])) >= ds.attrs[var + "_maxabs_diff_2d"])
+
+        bads0 = (
+            np.abs(ds[var].diff(dim=ds[var].dims[0]))
+            >= ds.attrs[var + "_maxabs_diff_2d"]
+        )
+        bads0 = np.vstack([bads0[0, :], bads0])
+
+        bads1 = (
+            np.abs(ds[var].diff(dim=ds[var].dims[1]))
+            >= ds.attrs[var + "_maxabs_diff_2d"]
+        )
+        bads1 = np.vstack([bads1[:, 0].transpose(), bads1.transpose()]).transpose()
+
+        ds[var] = ds[var].where(~bads0)
+        ds[var] = ds[var].where(~bads1)
 
         notetxt = (
             "Values filled where data increases by more than %5.2f "
@@ -266,10 +285,10 @@ def trim_mask(ds, var):
             "%s: Trimming using other vaiable(s) %s as mask"
             % (var, ds.attrs[var + "_mask"])
         )
-        
+
         for trimvar in ds.attrs[var + "_mask"]:
-            ds[var]=ds[var].where(~(ds[trimvar].isnull()))
-            print(f"{var}: Trimming using {trimvar} mask")
+            ds[var] = ds[var].where(~(ds[trimvar].isnull()))
+            # print(f"{var}: Trimming using {trimvar} mask")
 
             notetxt = f"Values filled using {trimvar} mask."
 
